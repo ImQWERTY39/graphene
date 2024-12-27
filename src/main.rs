@@ -3,6 +3,7 @@ use sdl2::pixels::Color;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 
+use std::hash::Hash;
 use std::time::Duration;
 
 mod coords;
@@ -22,7 +23,8 @@ fn main() {
 
     let mut canvas = window.into_canvas().build().expect("Shouldn't have failed");
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut time: f64 = 0.0;
+    let mut zoom: f64 = 1.0;
+    // let mut time: f64 = 0.0;
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -31,6 +33,26 @@ fn main() {
                     break 'running;
                 }
 
+                Event::MouseWheel { y, direction, .. } => match direction {
+                    sdl2::mouse::MouseWheelDirection::Normal => {
+                        if y > 0 {
+                            zoom -= 0.1;
+                            zoom = zoom.max(0.0);
+                        } else {
+                            zoom += 0.1;
+                        }
+                    }
+                    sdl2::mouse::MouseWheelDirection::Flipped => {
+                        if y > 0 {
+                            zoom += 0.1;
+                        } else {
+                            zoom -= 0.1;
+                            zoom = zoom.max(0.0);
+                        }
+                    }
+                    sdl2::mouse::MouseWheelDirection::Unknown(_) => todo!(),
+                },
+
                 _ => (),
             }
         }
@@ -38,15 +60,18 @@ fn main() {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
 
-        draw_coordinate_axes(&mut canvas);
+        draw_coordinate_axes(&mut canvas, zoom);
 
-        let points = function::get_points(|x, y| y - 6.0 * (x - time.sin() * 2.0).sin());
+        // let points = function::get_points(|x, y| y - 6.0 * (x - time.sin() * 2.0).sin());
+        // let points =
+        //     function::get_points(|x, y| y - ((x + 36.0).log10().tan() / 7.0).cos().powi(2));
+        let points = function::get_points(|x, y| y - x.sqrt(), zoom);
         draw_graph(&mut canvas, points, Color::RGB(255, 255, 255));
 
         canvas.present();
 
         std::thread::sleep(Duration::from_nanos(1_000_000_000 / 120));
-        time += 1.0 / 15.0;
+        // time += 1.0 / 15.0;
     }
 }
 
@@ -63,14 +88,14 @@ fn draw_graph(canvas: &mut Canvas<Window>, points: Vec<(i32, i32)>, colour: Colo
     // .for_each(|i| canvas.draw_point(i).unwrap());
 }
 
-fn draw_coordinate_axes(canvas: &mut Canvas<Window>) {
+fn draw_coordinate_axes(canvas: &mut Canvas<Window>, zoom: f64) {
     let window_height = WINDOW_HEIGHT as i32;
     let window_width = WINDOW_WIDTH as i32;
 
-    canvas.set_draw_color(Color::RGBA(64, 64, 64, 0));
+    canvas.set_draw_color(Color::RGBA(64, 64, 64, 4));
     let mut i = -X_MAX;
     while i <= X_MAX {
-        let x_screen = screenx_from_posx(i);
+        let x_screen = screenx_from_posx(i, zoom);
 
         canvas
             .draw_line((x_screen, 0), (x_screen, window_height))
@@ -81,7 +106,7 @@ fn draw_coordinate_axes(canvas: &mut Canvas<Window>) {
 
     let mut i = -Y_MAX;
     while i <= Y_MAX {
-        let y_screen = screeny_from_posy(i);
+        let y_screen = screeny_from_posy(i, zoom);
 
         canvas
             .draw_line((0, y_screen), (window_width, y_screen))

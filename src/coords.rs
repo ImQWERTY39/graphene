@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 pub const WINDOW_WIDTH: u32 = 1200;
 pub const WINDOW_HEIGHT: u32 = 800;
 pub const CENTER_WIDTH: i32 = WINDOW_WIDTH as i32 / 2;
@@ -14,18 +12,18 @@ const VERTICAL_SCALE: f64 = Y_MAX / CENTER_HEIGHT as f64;
 // Screen to custom: screen coords -> shifted origin coords - scale factor > custom coords
 // custom to Screen: custom coords - 1/scale factor > shifted origin coords -> screen coords
 
-pub fn posx_from_screenx(x: i32) -> f64 {
-    (x - CENTER_WIDTH) as f64 * HORIZONTAL_SCALE
+pub fn posx_from_screenx(x: i32, zoom: f64) -> f64 {
+    (x - CENTER_WIDTH) as f64 * HORIZONTAL_SCALE * zoom
 }
 
-pub fn posy_from_screeny(y: i32) -> f64 {
-    (CENTER_HEIGHT - y) as f64 * VERTICAL_SCALE
+pub fn posy_from_screeny(y: i32, zoom: f64) -> f64 {
+    (CENTER_HEIGHT - y) as f64 * VERTICAL_SCALE * zoom
 }
 
-pub fn screenx_from_posx(x: f64) -> i32 {
-    (x / HORIZONTAL_SCALE) as i32 + CENTER_WIDTH
+pub fn screenx_from_posx(x: f64, zoom: f64) -> i32 {
+    (x / HORIZONTAL_SCALE / zoom) as i32 + CENTER_WIDTH
 }
 
-pub fn screeny_from_posy(y: f64) -> i32 {
-    CENTER_HEIGHT - (y / VERTICAL_SCALE) as i32
+pub fn screeny_from_posy(y: f64, zoom: f64) -> i32 {
+    CENTER_HEIGHT - (y / VERTICAL_SCALE / zoom) as i32
 }
